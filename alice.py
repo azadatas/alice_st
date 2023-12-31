@@ -12,12 +12,12 @@ st.markdown(
     """
     <style>
         .highlight {
-            background-color: #DAA520;  /* Yellow color as an example */
+            background-color: #DAA520;  
             padding: 10px;
             border-radius: 5px;
         }
         .highlight h1 {
-            color: #000000;  /* Black color for text */
+            color: #000000; 
         }
     </style>
     """,
@@ -27,11 +27,23 @@ st.markdown(
 # Add title with the highlighted background
 st.markdown("<div class='highlight'><h1> Метрики для Яндекс Алисы </h1></div>", unsafe_allow_html=True)
 
+# Whitespace
+st.markdown("<br>", unsafe_allow_html=True)
 
-st.subheader("Вступление")
-st.write("В этом проекте я выбрал ключевые показатели, такие как Accuracy, Precision, Recall, F1 score, Confusion matrix, Контекстуальная релевантность и Человекоподобное взаимодействие, чтобы оценить производительность Алисы. Эти выбранные показатели дают ценную информацию о качестве и надежности взаимодействия Алисы, обеспечивая надежную оценку ее производительности в реальных диалоговых сценариях. Мы также признаем важность человеческой оценки, понимая, что такие факторы, как читаемость, слаженность и общая удовлетворенность пользователей, в значительной степени способствуют оценке успеха виртуальных ассистентов.")
+st.subheader("О проекте")
 
-st.write("Данные ниже были созданы мной и Алисой. Я старался быть максимально объективным в оценивании.")
+expander_bar = st.expander("About", expanded = True)
+expander_bar.markdown("""
+* **Обзор проекта:** Данный проект показывает метрики производительности для Алисы на русском и казахском языках.
+* **Библиотеки Python:** pandas, streamlit, plotly, matplotlib, seaborn
+* **Источник данных:** [Алиса](https://yandex.ru/alice).
+* **Метрики:** Accuracy, Precision, Recall, F1 score, Confusion matrix, Contextual Relevance и Human-like Interaction
+* **Контактная информация:** По всем вопросам или отзывам прошу связаться с Азаматом Рыскулбековым по адресу azacation1@gmail.com.
+""")
+
+st.subheader("Дисклеймер")
+st.write("Важно отметить роль таких факторов, как читаемость, слаженность и общая удовлетворенность пользователями, которые в значительной степени влияют на оценку успеха виртуальных ассистентов. Однако эти метрики не включены в данный проект, поскольку их оценка требует более тщательного и утонченного подхода.")
+st.write("Ниже представлены вопросы, ответы от Алисы, и мои оценки ответов. При оценке я стремился быть максимально объективным.")
 
 # Read csv and display df
 csv_file_path = 'query-response.csv'
@@ -69,13 +81,16 @@ st.markdown('<hr style="border: 2px solid #00ff00; background-color: #00ff00; ma
 st.title("Accuracy")
 st.write("Accuracy (Точность) - это показатель, используемый для измерения эффективности ответов Алисы. Формула точности рассчитывается как количество правильных ответов, разделенное на общее количество ответов.")
 st.latex(r"\text{Accuracy} = \frac{\text{Correct Responses}}{\text{Total Responses}}")
-st.write("Correct Responses - Правильные ответы")
-st.write("Total Responses - Общие ответы")
-st.write("Is it perfect response? - Это идеальный ответ?")
-st.write("Yes - Да")
-st.write("Satisfactory - Удовлетворительно")
-st.write("Not satisfactory - Неудовлетворительно")
-st.write("Для этого проекта ответы <Yes> и <Satisfactory> в столбце <Is it perfect response?> считаются правильными, а ответы <Not satisfactory> считаются неправильными.")
+expander_bar_acc = st.expander("Переводы некоторых слов")
+expander_bar_acc.markdown("""
+* **Correct Responses** - Правильные ответы
+* **Total Responses** - Общие ответы
+* **Is it perfect response?** - Это идеальный ответ?
+* **Yes** - Да
+* **Satisfactory** - Удовлетворительно
+* **Not satisfactory** - Неудовлетворительно
+""")
+st.write("Для данной метрики ответы <Yes> и <Satisfactory> в столбце <Is it perfect response?> считаются правильными, а ответы <Not satisfactory> считаются неправильными.")
 st.write("Показатель точности представляет собой общий процент, отражающий, насколько часто ответы Алисы соответствуют желаемым критериям, предлагая количественную оценку производительности системы.")
 
 # Accuracy calculation for Total 
@@ -123,7 +138,7 @@ elif accuracy_choice == "Russian":
     accuracy_df = rus_queries
     pass
 else:
-    accuracy_df = df  # Total DataFrame
+    accuracy_df = df 
 
 # Calculate accuracy
 correct_rows = accuracy_df["Is it perfect response?"].isin(["Yes", "Satisfactory"]).sum()
@@ -401,7 +416,7 @@ st.markdown('<hr style="border: 2px solid #00ff00; background-color: #00ff00; ma
 
 # CONTEXTUAL RELEVANCE 
 st.title("Contextual Relevance")
-st.write("Контекстная релевантность измеряет, насколько ответы Алисы соответствуют контексту или значению запросов пользователя. В контексте этого проекта контекстуальная релевантность оценивается на основе качественного суждения людей-оценщиков с учетом того, являются ли ответы Алисы уместными и контекстуально согласованными с заданными запросами.")
+st.write("Контекстная релевантность измеряет, насколько ответы Алисы соответствуют контексту или значению запросов пользователя.")
 st.latex(r"\text{Contextual Relevance} = \frac{\text{Number of Contextually Relevant Responses}}{\text{Total Number of Responses}} \times 100")
 
 # Whitespace
