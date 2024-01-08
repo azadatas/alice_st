@@ -64,14 +64,6 @@ qaz_queries.reset_index(drop=True, inplace=True)
 # Creating df with only Russian queries
 rus_queries = df[df.index < index_of_query.min()]
 
-# Display the filtered DataFrame
-st.subheader("DataFrame состоящий из запросов только на русском языке")
-st.write(rus_queries)
-
-# Display the filtered DataFrame
-st.subheader("DataFrame состоящий из запросов только на казахском языке")
-st.write(qaz_queries)
-
 # Draw a styled horizontal line
 st.markdown('<hr style="border: 2px solid #00ff00; background-color: #00ff00; margin: 0px -50% 0px -50%;">', unsafe_allow_html=True)
 
@@ -91,7 +83,6 @@ expander_bar_acc.markdown("""
 * **Not satisfactory** - Неудовлетворительно
 """)
 st.write("Для данной метрики ответы <Yes> и <Satisfactory> в столбце <Is it perfect response?> считаются правильными, а ответы <Not satisfactory> считаются неправильными.")
-st.write("Показатель точности представляет собой общий процент, отражающий, насколько часто ответы Алисы соответствуют желаемым критериям, предлагая количественную оценку производительности системы.")
 
 # Accuracy calculation for Total 
 correct_total = df["Is it perfect response?"].isin(["Yes", "Satisfactory"]).sum()
@@ -154,6 +145,30 @@ st.subheader(f"Accuracy for {accuracy_choice} Data Frame:")
 st.write(f"Правильные ответы: {correct_rows}")
 st.write(f"Общие ответы: {total_rows}")
 st.write(f"Accuracy: {accuracy:.2%}")
+
+# Convert 'Yes' and 'Satisfactory' to 1, 'Not satisfactory' to 0
+qaz_queries['NumericResponse'] = qaz_queries['Is it perfect response?'].apply(lambda x: 1 if x in ['Yes', 'Satisfactory'] else 0)
+rus_queries['NumericResponse'] = rus_queries['Is it perfect response?'].apply(lambda x: 1 if x in ['Yes', 'Satisfactory'] else 0)
+
+# Add a new column to distinguish between dataframes
+qaz_queries['Dataset'] = 'Qaz'
+rus_queries['Dataset'] = 'Rus'
+
+# Concatenate dataframes
+combined_df = pd.concat([qaz_queries, rus_queries])
+
+# Calculate 'R' values for each category
+category_r_values = combined_df.groupby(['Dataset', 'Category'])['NumericResponse'].mean().reset_index(name='R')
+
+qaz_queries = qaz_queries.drop(columns = ["Dataset","NumericResponse"])
+rus_queries = rus_queries.drop(columns = ["Dataset","NumericResponse"])
+
+# Create Radar Chart with custom colors
+fig = px.line_polar(category_r_values, r='R', theta='Category', line_close=True, color='Dataset',
+                    color_discrete_sequence=['blue', 'red'],  # Set custom colors for Qaz and Rus
+                    title='Combined Radar Chart with Custom Colors')
+
+st.plotly_chart(fig)
 
 # Whitespace
 st.markdown("<br>", unsafe_allow_html=True)
@@ -221,6 +236,34 @@ precision_fig.update_layout(
 st.plotly_chart(precision_fig)
 
 
+def calculate_precision(df, category_column, true_positive_column, false_positive_column):
+    # Group by the category column and calculate precision for each category
+    category_precision = (
+        df.groupby(category_column)
+        .apply(lambda group: group[true_positive_column].sum() / (group[true_positive_column].sum() + group[false_positive_column].sum()))
+        .reset_index(name='R')
+    )
+    return category_precision
+
+# Qaz lang
+r_values_qaz = calculate_precision(qaz_queries, 'Category', 'True Positive', 'False Positive')
+r_values_qaz['Dataset'] = "Qaz"
+
+# Rus lang
+r_values_rus = calculate_precision(rus_queries, 'Category', 'True Positive', 'False Positive')
+r_values_rus['Dataset'] = "Rus"
+
+combined_r_values = pd.concat([r_values_qaz, r_values_rus])
+
+combined_r_values.loc[combined_r_values['Dataset'] == 'Rus', 'R'] += 0.01
+
+# Create Radar Chart with custom colors
+fig = px.line_polar(combined_r_values, r='R', theta='Category', line_close=True, color='Dataset',
+                    color_discrete_sequence=['blue', 'red'], 
+                    title='Combined Radar Chart for Precision')
+
+st.plotly_chart(fig)
+
 # Draw a styled horizontal line
 st.markdown('<hr style="border: 2px solid #00ff00; background-color: #00ff00; margin: 0px -50% 0px -50%;">', unsafe_allow_html=True)
 
@@ -259,11 +302,11 @@ y_axis_range = [min(recall_kazakh, recall_russian, recall_total) * 100 - 15, 100
 # Set the bar width
 bar_width = 0.5
 
-precision_fig = go.Figure()
+recall_fig = go.Figure()
 
 # Add bar traces
 for i, label in enumerate(["Total", "Kazakh", "Russian"]):
-    precision_fig.add_trace(
+    recall_fig.add_trace(
         go.Bar(
             x=[label],
             y=[[recall_total * 100, recall_kazakh * 100, recall_russian * 100][i]],
@@ -274,13 +317,39 @@ for i, label in enumerate(["Total", "Kazakh", "Russian"]):
     )
 
 # Update layout
-precision_fig.update_layout(
-    title="Precision Distribution",
-    yaxis=dict(title="Precision (%)", range=y_axis_range),
+recall_fig.update_layout(
+    title="Recall Distribution",
+    yaxis=dict(title="Recall (%)", range=y_axis_range),
 )
 
 # Show the plot
-st.plotly_chart(precision_fig)
+st.plotly_chart(recall_fig)
+
+#Radar
+def calculate_recall(df, category_column, true_positive_column, false_negative_column):
+    category_recall= (
+        df.groupby(category_column)
+        .apply(lambda group: group[true_positive_column].sum() / (group[true_positive_column].sum() + group[false_negative_column].sum()))
+        .reset_index(name='R')
+    )
+    return category_recall
+
+# Qaz lang
+r_values_qaz = calculate_recall(qaz_queries, 'Category', 'True Positive', 'False Negative')
+r_values_qaz['Dataset'] = "Qaz"
+
+# Rus lang
+r_values_rus = calculate_recall(rus_queries, 'Category', 'True Positive', 'False Negative')
+r_values_rus['Dataset'] = "Rus"
+
+combined_r_values = pd.concat([r_values_qaz, r_values_rus])
+
+# Create Radar Chart with custom colors
+fig = px.line_polar(combined_r_values, r='R', theta='Category', line_close=True, color='Dataset',
+                    color_discrete_sequence=['blue', 'red'], 
+                    title='Combined Radar Chart for Recall')
+
+st.plotly_chart(fig)
 
 # Draw a styled horizontal line
 st.markdown('<hr style="border: 2px solid #00ff00; background-color: #00ff00; margin: 0px -50% 0px -50%;">', unsafe_allow_html=True)
